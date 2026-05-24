@@ -88,7 +88,7 @@ const MENU_COUNTS = [5, 25, 3, 3, 4, 8, 16, 4, 8, 4, 11];
 /* ─────────────────────────────────────────────
     RESTAURANT DETAIL SCREEN PANEL
 ───────────────────────────────────────────── */
-function RestaurantScreen({ restaurant, onBack, onNavigateToCheckout }) {
+function RestaurantScreen({ restaurant, onBack, onNavigateToCheckout }: { restaurant: any; onBack: () => void; onNavigateToCheckout: () => void }) {
   const [bookmarked, setBookmarked] = useState(false);
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [showMenuList, setShowMenuList] = useState(false);
@@ -215,7 +215,7 @@ function RestaurantScreen({ restaurant, onBack, onNavigateToCheckout }) {
           {filteredMenuItems.length === 0 ? (
             <View style={{ padding: 32, alignItems: 'center' }}>
               <MaterialCommunityIcons name="food-off" size={48} color="#94A3B8" />
-              <Text style={{ marginTop: 12, color: '#64748B', fontWeight: '600' }}>No dishes found matching "{menuSearchQuery}"</Text>
+              <Text style={{ marginTop: 12, color: '#64748B', fontWeight: '600' }}>No dishes found matching &quot;{menuSearchQuery}&quot;</Text>
             </View>
           ) : (
             filteredMenuItems.map(item => (
@@ -612,7 +612,7 @@ export default function FoodDeliveryApp() {
         <View style={styles.headerBlock}>
           <View style={styles.headerRow}>
             <View style={styles.locationWrap}>
-              <Pressable onPress={() => router.replace('/(tabs)')} style={styles.backButtonCircle}>
+              <Pressable onPress={() => router.replace('/(home)')} style={styles.backButtonCircle}>
                 <MaterialCommunityIcons name="chevron-left" size={22} color="#1E293B" />
               </Pressable>
               <MaterialIcons name="location-on" size={22} color="#EF4444" />
@@ -799,7 +799,7 @@ export default function FoodDeliveryApp() {
             <View style={{ padding: 40, alignItems: 'center' }}>
               <MaterialCommunityIcons name="store-off" size={48} color="#94A3B8" />
               <Text style={{ marginTop: 12, color: '#64748B', fontWeight: '600', textAlign: 'center' }}>
-                No restaurants matching "{dashboardSearchQuery}" found.
+                No restaurants matching &quot;{dashboardSearchQuery}&quot; found.
               </Text>
             </View>
           ) : (
@@ -1364,6 +1364,7 @@ const styles = StyleSheet.create({
   promoVerifiedText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   detailPillsScrollRow: { paddingHorizontal: 16, gap: 8, paddingBottom: 12, marginVertical: 4 },
   detailFilterBadgeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#fff' },
+  detailFilterBadgeBtnText: { fontSize: 13, fontWeight: '600', color: '#334155' },
   detailStaticFilterBadge: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#fff' },
   sectionHeadingHeader: { fontSize: 15, fontWeight: '800', color: '#0F172A', marginBottom: 12 },
   bundleComboMiniCard: { width: 130, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9', overflow: 'hidden', backgroundColor: '#FFF' },

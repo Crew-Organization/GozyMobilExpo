@@ -11,7 +11,7 @@ export default function Index() {
 
   if (!isHydrating) {
     if (session && onboarded) {
-      return <Redirect href="/(tabs)" />;
+      return <Redirect href="/(home)" />;
     }
     return <Redirect href="/(auth)/welcome" />;
   }

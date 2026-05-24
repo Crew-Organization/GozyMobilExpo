@@ -98,7 +98,7 @@ export default function WelcomeScreen() {
   const activeDetail = modules.find((m) => m.id === activeModule) || modules[3];
 
   const handleNext = () => {
-    router.push('/(tabs)');
+    router.push('/(home)');
   };
 
   const renderMockScreen = () => {

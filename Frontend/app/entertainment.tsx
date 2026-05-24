@@ -240,7 +240,7 @@ export default function EntertainmentScreen() {
                 style={styles.bannerGradient}
               >
                 <View style={styles.bannerLeftInfo}>
-                  <Text style={styles.bannerSubtitle}>It's time to</Text>
+                  <Text style={styles.bannerSubtitle}>It&apos;s time to</Text>
                   <Text style={styles.bannerTitleMain}>PLAY</Text>
                   <Text style={styles.bannerDistrict}>In your District</Text>
                   <Text style={styles.bannerOfferText}>Get flat ₹100 OFF on your first 3 bookings</Text>

@@ -77,7 +77,7 @@ export default function ProfileSetupScreen() {
       interests,
       preferredCategories: categories,
     });
-    router.replace('/(tabs)');
+    router.replace('/(home)');
   };
 
   return (

@@ -89,7 +89,7 @@ export default function TravelConfirmationScreen() {
       <Pressable
         onPress={() => {
           resetTravelFlow();
-          router.replace('/(tabs)');
+          router.replace('/(home)');
         }}
         style={styles.secondaryButton}>
         <Text style={styles.secondaryButtonText}>Back to home</Text>

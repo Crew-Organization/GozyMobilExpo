@@ -37,7 +37,7 @@ export default function LoginScreen() {
     setBusyAction('verify');
     try {
       const nextSession = await verifyOtp(code.trim());
-      router.replace(nextSession.user.name ? '/(tabs)' : '/(auth)/profile-setup');
+      router.replace(nextSession.user.name ? '/(home)' : '/(auth)/profile-setup');
     } finally {
       setBusyAction(null);
     }
@@ -47,7 +47,7 @@ export default function LoginScreen() {
     setBusyAction(provider);
     try {
       const nextSession = await continueWithProvider(provider, 'signin');
-      router.replace(nextSession.user.name ? '/(tabs)' : '/(auth)/profile-setup');
+      router.replace(nextSession.user.name ? '/(home)' : '/(auth)/profile-setup');
     } finally {
       setBusyAction(null);
     }
@@ -57,7 +57,7 @@ export default function LoginScreen() {
     setBusyAction('verify');
     try {
       await continueAsDemo();
-      router.replace('/(tabs)');
+      router.replace('/(home)');
     } finally {
       setBusyAction(null);
     }

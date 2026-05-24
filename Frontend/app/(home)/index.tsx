@@ -574,7 +574,7 @@ export default function SuperAppDashboard() {
 
         {/* ── WHAT'S NEW ── */}
         <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-          <Text style={styles.sectionTitle}>What's New</Text>
+          <Text style={styles.sectionTitle}>What&apos;s New</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storiesRow}>
           {whatsNewStories.map((s) => (
@@ -784,7 +784,7 @@ export default function SuperAppDashboard() {
         {w2gCount >= allWhere2Go.length && (
           <View style={styles.allLoadedBadge}>
             <MaterialCommunityIcons name="check-circle" size={18} color="#10B981" />
-            <Text style={styles.allLoadedText}>You've seen it all!</Text>
+            <Text style={styles.allLoadedText}>You&apos;ve seen it all!</Text>
           </View>
         )}
 
