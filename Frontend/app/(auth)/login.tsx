@@ -1,82 +1,40 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { AuthProgress } from '@/src/components/auth-progress';
+
 import { ScreenShell } from '@/src/components/screen-shell';
 import { useApp } from '@/src/context/app-context';
 import { colors, radius, spacing, typography } from '@/src/theme/tokens';
-import type { AuthChannel, AuthProvider } from '@/src/types';
-
-const providers: {
-  provider: AuthProvider;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  label: string;
-}[] = [
-  { provider: 'google', icon: 'google', label: 'Google' },
-  { provider: 'microsoft', icon: 'microsoft-windows', label: 'Microsoft' },
-  { provider: 'apple', icon: 'apple', label: 'Apple' },
-];
-
-function readParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import type { AuthProvider } from '@/src/types';
 
 export default function LoginScreen() {
-  const params = useLocalSearchParams<{ mode?: string | string[]; method?: string | string[] }>();
-  const initialMode = readParam(params.mode) === 'signup' ? 'signup' : 'signin';
-  const initialChannel = readParam(params.method) === 'phone' ? 'phone' : 'email';
-  const { requestOtp, verifyOtp, continueAsDemo, continueWithProvider } = useApp();
+  const { requestOtp, verifyOtp, continueWithProvider, continueAsDemo } = useApp();
 
-  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
-  const [channel, setChannel] = useState<AuthChannel>(initialChannel);
   const [email, setEmail] = useState('demo@gozy.app');
-  const [phone, setPhone] = useState('+91 9876543210');
   const [code, setCode] = useState('202626');
-  const [otpHint, setOtpHint] = useState('');
-  const [requestedIdentifier, setRequestedIdentifier] = useState<string | null>(null);
-  const [requestedChannel, setRequestedChannel] = useState<AuthChannel | null>(null);
+  const [step, setStep] = useState<'email' | 'code'>('email');
   const [busyAction, setBusyAction] = useState<'request' | 'verify' | AuthProvider | null>(null);
-
-  const identifier = channel === 'email' ? email.trim() : phone.trim();
-  const sentState = requestedIdentifier === identifier && requestedChannel === channel;
-
-  const sentTitle = channel === 'email' ? 'Check your email' : 'Check your messages';
-  const sentFallback =
-    channel === 'email'
-      ? `We sent a secure 6-digit code to ${identifier}. Check inbox and spam.`
-      : `We sent a secure 6-digit code to ${identifier}. Check SMS or WhatsApp.`;
-
-  const primaryCopy = useMemo(
-    () =>
-      mode === 'signin'
-        ? 'Sign back in without passwords.'
-        : 'Create your account with a simple one-time code.',
-    [mode],
-  );
+  const [otpHint, setOtpHint] = useState('');
 
   const handleRequestOtp = async () => {
-    if (!identifier) {
-      return;
-    }
-
+    if (!email.trim()) return;
     setBusyAction('request');
-
     try {
-      const hint = await requestOtp(identifier, channel);
-      setRequestedIdentifier(identifier);
-      setRequestedChannel(channel);
+      const hint = await requestOtp(email.trim(), 'email');
       setOtpHint(hint);
+      setStep('code');
     } finally {
       setBusyAction(null);
     }
   };
 
   const handleVerify = async () => {
+    if (code.trim().length < 4) return;
     setBusyAction('verify');
-
     try {
       const nextSession = await verifyOtp(code.trim());
       router.replace(nextSession.user.name ? '/(tabs)' : '/(auth)/profile-setup');
@@ -87,9 +45,8 @@ export default function LoginScreen() {
 
   const handleProvider = async (provider: AuthProvider) => {
     setBusyAction(provider);
-
     try {
-      const nextSession = await continueWithProvider(provider, mode);
+      const nextSession = await continueWithProvider(provider, 'signin');
       router.replace(nextSession.user.name ? '/(tabs)' : '/(auth)/profile-setup');
     } finally {
       setBusyAction(null);
@@ -98,7 +55,6 @@ export default function LoginScreen() {
 
   const handleDemo = async () => {
     setBusyAction('verify');
-
     try {
       await continueAsDemo();
       router.replace('/(tabs)');
@@ -109,15 +65,11 @@ export default function LoginScreen() {
 
   return (
     <ScreenShell contentContainerStyle={styles.content}>
-      <AuthProgress currentStep={2} />
 
-      <View style={styles.heroCard}>
-        <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>Passwordless access</Text>
-          <Text style={styles.title}>{primaryCopy}</Text>
-          <Text style={styles.subtitle}>
-            Use email, phone, or a provider sign-in. Your Gozy account stays connected to one clean profile.
-          </Text>
+
+      <View style={styles.header}>
+        <View style={styles.brandBadge}>
+          <Text style={styles.brandText}>GOZY SECURE</Text>
         </View>
         <Image
           contentFit="cover"
@@ -126,156 +78,142 @@ export default function LoginScreen() {
           }}
           style={styles.heroImage}
         />
+        <Text style={styles.headerTitle}>Create your account</Text>
+        <Text style={styles.headerSubtitle}>
+          Secure, passwordless entry using your preferred account channel.
+        </Text>
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.panelLabel}>Account mode</Text>
-        <View style={styles.segmented}>
-          <Pressable
-            onPress={() => setMode('signin')}
-            style={[styles.segment, mode === 'signin' && styles.segmentActive]}>
-            <Text style={[styles.segmentText, mode === 'signin' && styles.segmentTextActive]}>
-              Sign in
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setMode('signup')}
-            style={[styles.segment, mode === 'signup' && styles.segmentActive]}>
-            <Text style={[styles.segmentText, mode === 'signup' && styles.segmentTextActive]}>
-              Create account
-            </Text>
-          </Pressable>
-        </View>
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>CONTINUE WITH MAIL</Text>
 
-        <Text style={styles.panelLabel}>Verification method</Text>
-        <View style={styles.inlineOptions}>
-          <Pressable
-            onPress={() => setChannel('email')}
-            style={[styles.inlineButton, channel === 'email' && styles.inlineButtonActive]}>
-            <MaterialCommunityIcons
-              color={channel === 'email' ? '#FFFFFF' : colors.sky}
-              name="email-outline"
-              size={18}
-            />
-            <Text
-              style={[
-                styles.inlineButtonText,
-                channel === 'email' && styles.inlineButtonTextActive,
-              ]}>
-              Email
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setChannel('phone')}
-            style={[styles.inlineButton, channel === 'phone' && styles.inlineButtonActive]}>
-            <MaterialCommunityIcons
-              color={channel === 'phone' ? '#FFFFFF' : colors.sky}
-              name="phone-outline"
-              size={18}
-            />
-            <Text
-              style={[
-                styles.inlineButtonText,
-                channel === 'phone' && styles.inlineButtonTextActive,
-              ]}>
-              Phone number
-            </Text>
-          </Pressable>
-        </View>
+        {step === 'email' ? (
+          <View style={styles.formGroup}>
+            <View style={styles.inputWrapper}>
+              <MaterialCommunityIcons name="email-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
+              <TextInput
+                autoCapitalize="none"
+                keyboardType="email-address"
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={colors.textLight}
+                style={styles.input}
+                value={email}
+              />
+            </View>
+
+            <Pressable
+              disabled={busyAction !== null || !email.trim()}
+              onPress={handleRequestOtp}
+              style={[styles.primaryButton, (!email.trim() || busyAction !== null) && styles.disabledButton]}
+            >
+              <LinearGradient colors={['#172B4D', '#29446D']} style={styles.gradientButton}>
+                {busyAction === 'request' ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>Send One-Time Code</Text>
+                    <MaterialCommunityIcons name="send" size={16} color="#FFFFFF" />
+                  </>
+                )}
+              </LinearGradient>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.formGroup}>
+            <View style={styles.infoBox}>
+              <MaterialCommunityIcons name="email-fast-outline" size={20} color={colors.sky} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoTitle}>Verification Code Sent</Text>
+                <Text style={styles.infoText}>
+                  We sent a 6-digit code to <Text style={{ fontWeight: '700' }}>{email}</Text>. 
+                  In local mock mode, use the default code <Text style={{ fontWeight: '800' }}>202626</Text>.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <MaterialCommunityIcons name="key-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
+              <TextInput
+                keyboardType="number-pad"
+                maxLength={6}
+                onChangeText={setCode}
+                placeholder="202626"
+                placeholderTextColor={colors.textLight}
+                style={styles.input}
+                value={code}
+              />
+            </View>
+
+            <View style={styles.actionRow}>
+              <Pressable onPress={() => setStep('email')} style={styles.backButton}>
+                <Text style={styles.backButtonText}>Change</Text>
+              </Pressable>
+              <Pressable
+                disabled={busyAction !== null || code.trim().length < 4}
+                onPress={handleVerify}
+                style={[styles.verifyButton, (busyAction !== null || code.trim().length < 4) && styles.disabledButton]}
+              >
+                {busyAction === 'verify' ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.verifyButtonText}>Verify</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        )}
       </View>
 
-      <View style={styles.formCard}>
-        <Text style={styles.fieldLabel}>{channel === 'email' ? 'Email address' : 'Phone number'}</Text>
-        <TextInput
-          autoCapitalize="none"
-          keyboardType={channel === 'email' ? 'email-address' : 'phone-pad'}
-          onChangeText={channel === 'email' ? setEmail : setPhone}
-          placeholder={channel === 'email' ? 'you@gozy.app' : '+91 9876543210'}
-          placeholderTextColor={colors.textLight}
-          style={styles.input}
-          value={channel === 'email' ? email : phone}
-        />
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+        <View style={styles.dividerLine} />
+      </View>
 
+      <View style={styles.providerStack}>
         <Pressable
-          disabled={busyAction !== null || !identifier}
-          onPress={handleRequestOtp}
-          style={[styles.secondaryButton, (!identifier || busyAction !== null) && styles.disabled]}>
-          <Text style={styles.secondaryButtonText}>
-            {busyAction === 'request' ? 'Sending code...' : sentState ? 'Send again' : 'Send code'}
-          </Text>
+          disabled={busyAction !== null}
+          onPress={() => handleProvider('microsoft')}
+          style={[styles.providerButton, styles.microsoftButton]}
+        >
+          {busyAction === 'microsoft' ? (
+            <ActivityIndicator color="#000000" size="small" />
+          ) : (
+            <>
+              <MaterialCommunityIcons name="microsoft-windows" size={20} color="#000000" />
+              <Text style={styles.providerButtonText}>Continue with Microsoft</Text>
+            </>
+          )}
         </Pressable>
 
-        <View style={styles.noticeCard}>
-          <MaterialCommunityIcons
-            color={colors.sky}
-            name={channel === 'email' ? 'email-fast-outline' : 'message-processing-outline'}
-            size={18}
-          />
-          <View style={styles.noticeCopy}>
-            <Text style={styles.noticeTitle}>{sentState ? sentTitle : 'Check delivery details'}</Text>
-            <Text style={styles.noticeBody}>
-              {sentState
-                ? otpHint || sentFallback
-                : channel === 'email'
-                  ? 'We will send a one-time code to your inbox. In local mode, the default code is 202626. If you change the email, send a fresh code.'
-                  : 'We will send a one-time code to your phone. In local mode, the default code is 202626. If you change the number, send a fresh code.'}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.fieldLabel}>One-time code</Text>
-        <TextInput
-          keyboardType="number-pad"
-          maxLength={6}
-          onChangeText={setCode}
-          placeholder="202626"
-          placeholderTextColor={colors.textLight}
-          style={styles.input}
-          value={code}
-        />
-
         <Pressable
-          disabled={busyAction !== null || !sentState || code.trim().length < 4}
-          onPress={handleVerify}
-          style={[styles.primaryButton, (busyAction !== null || !sentState || code.trim().length < 4) && styles.disabled]}>
-          {busyAction === 'verify' ? (
+          disabled={busyAction !== null}
+          onPress={() => handleProvider('apple')}
+          style={[styles.providerButton, styles.appleButton]}
+        >
+          {busyAction === 'apple' ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.primaryButtonText}>
-              {mode === 'signin' ? 'Sign in to Gozy' : 'Create your Gozy account'}
-            </Text>
+            <>
+              <MaterialCommunityIcons name="apple" size={22} color="#FFFFFF" />
+              <Text style={[styles.providerButtonText, { color: '#FFFFFF' }]}>Continue with Apple</Text>
+            </>
           )}
         </Pressable>
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.sectionTitle}>Other ways to continue</Text>
-        <View style={styles.providerRow}>
-          {providers.map((item) => {
-            const busy = busyAction === item.provider;
-
-            return (
-              <Pressable
-                disabled={busyAction !== null}
-                key={item.provider}
-                onPress={() => handleProvider(item.provider)}
-                style={styles.providerButton}>
-                {busy ? (
-                  <ActivityIndicator color={colors.sky} size="small" />
-                ) : (
-                  <MaterialCommunityIcons color={colors.text} name={item.icon} size={20} />
-                )}
-                <Text style={styles.providerText}>{item.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      <View style={styles.footer}>
         <Pressable
           disabled={busyAction !== null}
           onPress={handleDemo}
-          style={[styles.demoButton, busyAction !== null && styles.disabled]}>
-          <MaterialCommunityIcons color={colors.sky} name="arrow-right-circle-outline" size={18} />
+          style={[styles.demoButton, busyAction !== null && styles.disabledButton]}
+        >
+          <MaterialCommunityIcons name="arrow-right-circle-outline" size={18} color={colors.sky} />
           <Text style={styles.demoButtonText}>Continue as demo user</Text>
+        </Pressable>
+        <Pressable onPress={() => router.back()} style={styles.backLink}>
+          <Text style={styles.backLinkText}>Go back to Gateway</Text>
         </Pressable>
       </View>
     </ScreenShell>
@@ -287,149 +225,112 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
+    backgroundColor: '#F8FAFC',
   },
-  heroCard: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
+  header: {
+    alignItems: 'center',
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  brandBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.surface,
   },
-  heroCopy: {
-    padding: spacing.lg,
-    gap: spacing.sm,
+  brandText: {
+    color: colors.sky,
+    fontSize: typography.tiny,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
   heroImage: {
     width: '100%',
     height: 150,
+    borderRadius: radius.lg,
+    marginTop: spacing.sm,
   },
-  eyebrow: {
-    color: colors.sky,
-    fontSize: typography.caption,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  title: {
+  headerTitle: {
     color: colors.text,
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '900',
-    lineHeight: 34,
+    marginTop: 12,
   },
-  subtitle: {
+  headerSubtitle: {
     color: colors.textMuted,
     fontSize: typography.body,
-    lineHeight: 22,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
   },
-  panel: {
+  card: {
+    marginHorizontal: spacing.lg,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
     padding: spacing.lg,
     gap: spacing.md,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  panelLabel: {
+  cardLabel: {
     color: colors.textMuted,
-    fontSize: typography.caption,
+    fontSize: typography.tiny,
     fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
-  segmented: {
-    flexDirection: 'row',
-    borderRadius: radius.pill,
-    backgroundColor: colors.canvasMuted,
-    padding: 4,
-    gap: 4,
-  },
-  segment: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentActive: {
-    backgroundColor: colors.sky,
-  },
-  segmentText: {
-    color: colors.textMuted,
-    fontSize: typography.body,
-    fontWeight: '700',
-  },
-  segmentTextActive: {
-    color: '#FFFFFF',
-  },
-  inlineOptions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  inlineButton: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    flexDirection: 'row',
-    paddingHorizontal: spacing.sm,
-  },
-  inlineButtonActive: {
-    backgroundColor: colors.sky,
-    borderColor: colors.sky,
-  },
-  inlineButtonText: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '700',
-  },
-  inlineButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  formCard: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.lg,
+  formGroup: {
     gap: spacing.md,
   },
-  fieldLabel: {
-    color: colors.text,
-    fontSize: typography.caption,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  input: {
+  inputWrapper: {
     height: 52,
     borderRadius: radius.md,
     backgroundColor: colors.canvasMuted,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.line,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
+  },
+  inputIcon: {
+    marginRight: spacing.sm,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
     color: colors.text,
     fontSize: typography.body,
+    fontWeight: '600',
   },
-  secondaryButton: {
-    height: 50,
+  primaryButton: {
+    width: '100%',
+    height: 52,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    gap: spacing.xs,
   },
-  secondaryButtonText: {
-    color: colors.text,
+  primaryButtonText: {
+    color: '#FFFFFF',
     fontSize: typography.body,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  noticeCard: {
+  disabledButton: {
+    opacity: 0.55,
+  },
+  infoBox: {
     flexDirection: 'row',
     gap: spacing.sm,
     borderRadius: radius.md,
@@ -439,65 +340,109 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     alignItems: 'flex-start',
   },
-  noticeCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  noticeTitle: {
+  infoTitle: {
     color: colors.text,
     fontSize: typography.body,
     fontWeight: '800',
+    marginBottom: 2,
   },
-  noticeBody: {
+  infoText: {
     color: colors.textMuted,
     fontSize: typography.caption,
     lineHeight: 18,
   },
-  primaryButton: {
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  backButton: {
+    flex: 1,
     height: 52,
     borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.sky,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  providerRow: {
-    gap: spacing.sm,
-  },
-  providerButton: {
-    minHeight: 50,
-    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.lineStrong,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
   },
-  providerText: {
+  backButtonText: {
     color: colors.text,
     fontSize: typography.body,
     fontWeight: '700',
   },
-  demoButton: {
-    minHeight: 50,
+  verifyButton: {
+    flex: 2,
+    height: 52,
+    borderRadius: radius.pill,
+    backgroundColor: colors.sky,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifyButtonText: {
+    color: '#FFFFFF',
+    fontSize: typography.body,
+    fontWeight: '800',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.line,
+  },
+  dividerText: {
+    color: colors.textLight,
+    fontSize: typography.tiny,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  providerStack: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  providerButton: {
+    height: 52,
     borderRadius: radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1.5,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  microsoftButton: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+  },
+  appleButton: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+  },
+  providerButtonText: {
+    color: colors.text,
+    fontSize: typography.body,
+    fontWeight: '700',
+  },
+  footer: {
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  demoButton: {
+    width: '100%',
+    height: 52,
+    borderRadius: radius.pill,
     backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.line,
     flexDirection: 'row',
     alignItems: 'center',
@@ -508,5 +453,14 @@ const styles = StyleSheet.create({
     color: colors.sky,
     fontSize: typography.body,
     fontWeight: '800',
+  },
+  backLink: {
+    paddingVertical: 4,
+  },
+  backLinkText: {
+    color: colors.textMuted,
+    fontSize: typography.body,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

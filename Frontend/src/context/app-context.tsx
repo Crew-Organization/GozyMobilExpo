@@ -131,8 +131,8 @@ function applyBootstrap(
 
 export function AppProvider({ children }: PropsWithChildren) {
   const [isHydrating, setIsHydrating] = useState(false);
-  const [session, setSession] = useState<Session | null>(mockSession);
-  const [onboarded, setOnboarded] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [onboarded, setOnboarded] = useState(false);
   const [otpRequestedFor, setOtpRequestedFor] = useState<string | null>(null);
   const [otpChannel, setOtpChannel] = useState<AuthChannel | null>(null);
   const [feed, setFeed] = useState<Experience[]>(mockBootstrap.feed);

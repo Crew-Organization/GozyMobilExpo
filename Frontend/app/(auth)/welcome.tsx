@@ -1,702 +1,604 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { colors, radius } from '@/src/theme/tokens';
 
-import { AuthProgress } from '@/src/components/auth-progress';
-import { ScreenShell } from '@/src/components/screen-shell';
-import { useApp } from '@/src/context/app-context';
-import { colors, radius, spacing, typography } from '@/src/theme/tokens';
-import type { AuthProvider } from '@/src/types';
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const benefits = [
-  { icon: 'robot-outline', title: 'AI ready' },
-  { icon: 'message-processing-outline', title: 'Chat synced' },
-  { icon: 'wallet-outline', title: 'Wallet safe' },
-] as const;
+type ModuleType = 'travel' | 'shopping' | 'food' | 'movies' | 'content';
 
-const detailCards = [
-  {
-    icon: 'shield-check-outline' as const,
-    title: 'Private access',
-    body: 'One account for chats, payments, saved items, and AI help.',
-  },
-  {
-    icon: 'flash-outline' as const,
-    title: 'Faster entry',
-    body: 'Use Google, Microsoft, Apple, phone number, or email.',
-  },
-  {
-    icon: 'devices' as const,
-    title: 'Clean setup',
-    body: 'Start in seconds and finish your profile after sign in.',
-  },
-] as const;
-
-const snapshotCards = [
-  {
-    icon: 'robot-outline' as const,
-    label: 'AI companion',
-    meta: 'Plans, suggestions, reminders',
-  },
-  {
-    icon: 'wallet-plus-outline' as const,
-    label: 'Secure wallet',
-    meta: 'Balance, cashback, activity',
-  },
-  {
-    icon: 'message-text-outline' as const,
-    label: 'Social inbox',
-    meta: 'Friends, partners, updates',
-  },
-] as const;
-
-const providers: {
-  provider: AuthProvider;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+interface ModuleDetail {
+  id: ModuleType;
   label: string;
-  sublabel: string;
-}[] = [
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  color: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  challenge: string;
+  output: string;
+  image: string;
+  heroTitle: string;
+}
+
+const modules: ModuleDetail[] = [
   {
-    provider: 'google',
-    icon: 'google',
-    label: 'Continue with Google',
-    sublabel: 'Fastest for most users',
+    id: 'travel',
+    label: 'Travel',
+    icon: 'airplane',
+    color: '#0284C7',
+    eyebrow: 'TRAVEL BOOKING FLOW',
+    title: 'All new\nGozy App',
+    description: 'Gozy handles your flights, stays, and dynamic itineraries with AI assistance.',
+    challenge: 'Current travel planning requires toggling between dozens of apps for flights, hotels, and itineraries.',
+    output: 'A unified AI travel assistant that books end-to-end trips in a single, beautiful interface.',
+    image: 'https://images.unsplash.com/photo-1436491865332-7a615061c443?auto=format&fit=crop&w=400&q=80',
+    heroTitle: 'Bali Getaway',
   },
   {
-    provider: 'microsoft',
-    icon: 'microsoft-windows',
-    label: 'Continue with Microsoft',
-    sublabel: 'Best for work accounts',
+    id: 'shopping',
+    label: 'Shopping',
+    icon: 'shopping-outline',
+    color: '#0D9488',
+    eyebrow: 'CURATED SHOPPING FLOW',
+    title: 'All new\nGozy App',
+    description: 'Discover trending lifestyle items with a secure checkout built into your daily feed.',
+    challenge: 'Re-look the on-demand shopping experience with a creative approach to reducing steps and quick checkouts.',
+    output: 'User friendly interface for a better user experience made in bright colours. Quick easy to use.',
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80',
+    heroTitle: 'Autumn Collection',
   },
   {
-    provider: 'apple',
-    icon: 'apple',
-    label: 'Continue with Apple',
-    sublabel: 'Private sign in on Apple devices',
+    id: 'food',
+    label: 'Food',
+    icon: 'silverware-fork-knife',
+    color: '#E11D48',
+    eyebrow: 'FOOD DELIVERY FLOW',
+    title: 'All new\nGozy App',
+    description: 'Order your favorite local dining spots with seamless live tracking and chef chat.',
+    challenge: 'Re-look the on-demand food delivery experience with a creative approach to reducing steps and quick checkouts.',
+    output: 'User friendly interface for a better user experience made in bright colours. Quick easy to use.',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
+    heroTitle: 'Truffle Pizza',
+  },
+  {
+    id: 'movies',
+    label: 'Movies',
+    icon: 'movie-open-outline',
+    color: '#F43F5E',
+    eyebrow: 'MOVIE BOOKING FLOW',
+    title: 'All new\nGozy App',
+    description: 'A pioneer in online ticketing, Gozy is your ultimate entertainment platform.',
+    challenge: 'Re-look the On-demand booking experience with creative approach of reducing steps and quick checkouts.',
+    output: 'User friendly interface for a better user experience made in bright colours. Quick easy to use.',
+    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400&q=80',
+    heroTitle: 'Disney Aladdin',
+  },
+  {
+    id: 'content',
+    label: 'Content',
+    icon: 'play-circle-outline',
+    color: '#7C3AED',
+    eyebrow: 'SOCIAL CONTENT FLOW',
+    title: 'All new\nGozy App',
+    description: 'Watch trending creator videos, chat with friends, and share lists instantly.',
+    challenge: 'Re-look the content consumption experience with a creative approach to reducing steps and quick checkouts.',
+    output: 'User friendly interface for a better user experience made in bright colours. Quick easy to use.',
+    image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80',
+    heroTitle: 'Trending Reels',
   },
 ];
 
 export default function WelcomeScreen() {
-  const { continueAsDemo, continueWithProvider } = useApp();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [busyProvider, setBusyProvider] = useState<AuthProvider | null>(null);
-  const [busyDemo, setBusyDemo] = useState(false);
+  const [activeModule, setActiveModule] = useState<ModuleType>('movies');
+  const activeDetail = modules.find((m) => m.id === activeModule) || modules[3];
 
-  const handleProvider = async (provider: AuthProvider) => {
-    setBusyProvider(provider);
-
-    try {
-      const nextSession = await continueWithProvider(provider, mode);
-      router.replace(nextSession.user.name ? '/(tabs)' : '/(auth)/profile-setup');
-    } finally {
-      setBusyProvider(null);
-    }
+  const handleNext = () => {
+    router.push('/(tabs)');
   };
 
-  const handleOtpRoute = (method: 'phone' | 'email') => {
-    router.push({
-      pathname: '/(auth)/login',
-      params: { mode, method },
-    });
-  };
-
-  const handleDemo = async () => {
-    setBusyDemo(true);
-
-    try {
-      await continueAsDemo();
-      router.replace('/(tabs)');
-    } finally {
-      setBusyDemo(false);
-    }
+  const renderMockScreen = () => {
+    return (
+      <Animated.View 
+        key={activeDetail.id}
+        entering={FadeIn.duration(400)}
+        exiting={FadeOut.duration(400)}
+        style={styles.mockScreenBody}
+      >
+        <View style={styles.moviesTopNav}>
+          <View style={styles.moviesNavTabs}>
+            <Text style={[styles.moviesNavTab, styles.moviesNavTabActive]}>{activeDetail.label}</Text>
+            <Text style={styles.moviesNavTab}>Explore</Text>
+            <Text style={styles.moviesNavTab}>Saved</Text>
+          </View>
+        </View>
+        <View style={styles.moviesFiltersRow}>
+          <View style={styles.moviesFilterPill}>
+            <MaterialCommunityIcons name="filter-variant" size={8} color="#000" />
+            <Text style={styles.moviesFilterText}>FILTER</Text>
+          </View>
+          <View style={styles.moviesFilterPill}>
+            <MaterialCommunityIcons name="star" size={8} color="#000" />
+            <Text style={styles.moviesFilterText}>TOP RATED</Text>
+          </View>
+        </View>
+        <View style={styles.moviesHeroCard}>
+          <Image
+            source={{ uri: activeDetail.image }}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+          />
+          <LinearGradient colors={['transparent', '#0F172A']} style={StyleSheet.absoluteFillObject} />
+          <View style={styles.moviesHeroContent}>
+            <Text style={styles.moviesHeroTitle}>{activeDetail.heroTitle}</Text>
+            <View style={styles.moviesHeroStats}>
+              <MaterialCommunityIcons name="heart" size={8} color={activeDetail.color} />
+              <Text style={styles.moviesHeroStatText}>98% Match</Text>
+              <Text style={styles.moviesHeroStatSub}>Popular Now</Text>
+            </View>
+            <Text style={styles.moviesHeroMeta}>Personalized for you</Text>
+            
+            <View style={styles.moviesBookBtn}>
+              <Text style={styles.moviesBookBtnText}>GO</Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Mock Content Feed list items below */}
+        <View style={styles.mockListCard}>
+          <View style={styles.mockAvatar} />
+          <View style={styles.mockListTextStack}>
+            <View style={styles.mockListLine1} />
+            <View style={styles.mockListLine2} />
+          </View>
+        </View>
+        <View style={styles.mockListCard}>
+          <View style={styles.mockAvatar} />
+          <View style={styles.mockListTextStack}>
+            <View style={styles.mockListLine1} />
+            <View style={styles.mockListLine2} />
+          </View>
+        </View>
+      </Animated.View>
+    );
   };
 
   return (
-    <ScreenShell contentContainerStyle={styles.content}>
-      <AuthProgress currentStep={1} />
-
-      <View style={styles.heroCard}>
-        <Image
-          contentFit="cover"
-          source={{
-            uri: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1400&q=80',
-          }}
-          style={styles.heroImage}
-        />
-        <LinearGradient colors={['rgba(23,43,77,0.1)', 'rgba(23,43,77,0.78)']} style={styles.heroOverlay} />
-
-        <View style={styles.heroTopRow}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>GOZY</Text>
-          </View>
-          <View style={styles.heroPill}>
-            <MaterialCommunityIcons color="#FFFFFF" name="shield-lock-outline" size={14} />
-            <Text style={styles.heroPillText}>Secure access</Text>
-          </View>
+    <View style={styles.container}>
+      {/* Background Circle */}
+      <View style={[styles.heroBgCircle, { backgroundColor: activeDetail.color }]} />
+      
+      {/* Top Half: Presentation */}
+      <View style={styles.topHalf}>
+        <View style={styles.heroLeftCol}>
+          <Text style={[styles.eyebrow, { color: activeDetail.color }]}>{activeDetail.eyebrow}</Text>
+          <Text style={styles.mainTitle}>{activeDetail.title}</Text>
+          <Text style={styles.description} numberOfLines={4}>{activeDetail.description}</Text>
         </View>
 
-        <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>One elegant sign in for everything inside Gozy.</Text>
-          <Text style={styles.heroBody}>
-            Enter once and keep your chats, wallet, bookings, saved picks, and AI assistance connected in one place.
-          </Text>
-
-          <View style={styles.benefitRow}>
-            {benefits.map((benefit) => (
-              <View key={benefit.title} style={styles.benefitChip}>
-                <MaterialCommunityIcons color="#FFFFFF" name={benefit.icon} size={15} />
-                <Text style={styles.benefitLabel}>{benefit.title}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.heroStatsRow}>
-            <View style={styles.heroStatCard}>
-              <Text style={styles.heroStatValue}>5 ways</Text>
-              <Text style={styles.heroStatLabel}>Google, Microsoft, Apple, phone, email</Text>
-            </View>
-            <View style={styles.heroStatCard}>
-              <Text style={styles.heroStatValue}>1 profile</Text>
-              <Text style={styles.heroStatLabel}>Wallet, AI, chat, saved activity</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.snapshotRow}>
-        {snapshotCards.map((card) => (
-          <View key={card.label} style={styles.snapshotCard}>
-            <View style={styles.snapshotIcon}>
-              <MaterialCommunityIcons color={colors.sky} name={card.icon} size={18} />
-            </View>
-            <Text style={styles.snapshotLabel}>{card.label}</Text>
-            <Text style={styles.snapshotMeta}>{card.meta}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.panel}>
-        <View style={styles.panelHeader}>
-          <View>
-            <Text style={styles.panelLabel}>Account mode</Text>
-            <Text style={styles.panelTitle}>
-              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
-            </Text>
-          </View>
-          <View style={styles.panelTag}>
-            <Text style={styles.panelTagText}>
-              {mode === 'signin' ? 'Returning user' : 'New to Gozy'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.segmented}>
-          <Pressable
-            onPress={() => setMode('signin')}
-            style={[styles.segment, mode === 'signin' && styles.segmentActive]}>
-            <Text style={[styles.segmentText, mode === 'signin' && styles.segmentTextActive]}>
-              Sign in
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setMode('signup')}
-            style={[styles.segment, mode === 'signup' && styles.segmentActive]}>
-            <Text style={[styles.segmentText, mode === 'signup' && styles.segmentTextActive]}>
-              Create account
-            </Text>
-          </Pressable>
-        </View>
-
-        <Text style={styles.sectionTitle}>Continue instantly</Text>
-        <View style={styles.stack}>
-          {providers.map((item) => {
-            const busy = busyProvider === item.provider;
-
-            return (
-              <Pressable
-                disabled={Boolean(busyProvider) || busyDemo}
-                key={item.provider}
-                onPress={() => handleProvider(item.provider)}
-                style={styles.authButton}>
-                <View style={styles.authButtonLeft}>
-                  <View style={styles.authIconWrap}>
-                    {busy ? (
-                      <ActivityIndicator color={colors.sky} size="small" />
-                    ) : (
-                      <MaterialCommunityIcons color={colors.text} name={item.icon} size={19} />
-                    )}
-                  </View>
-                  <View style={styles.authCopy}>
-                    <Text style={styles.authButtonText}>
-                      {busy ? 'Continuing...' : item.label}
-                    </Text>
-                    <Text style={styles.authButtonSubtext}>{item.sublabel}</Text>
-                  </View>
+        <View style={styles.heroRightCol}>
+          <View style={styles.phoneMockupRotated}>
+            <View style={styles.phoneNotch} />
+            <View style={styles.phoneScreen}>
+              <View style={styles.mockStatusBar}>
+                <Text style={styles.statusBarTime}>9:41</Text>
+                <View style={styles.statusBarIcons}>
+                  <MaterialCommunityIcons name="signal" size={6} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="wifi" size={6} color="#FFFFFF" style={{ marginLeft: 2 }} />
+                  <MaterialCommunityIcons name="battery" size={8} color="#FFFFFF" style={{ marginLeft: 2 }} />
                 </View>
-                <MaterialCommunityIcons color={colors.textLight} name="chevron-right" size={18} />
-              </Pressable>
-            );
-          })}
+              </View>
+              
+              <View style={{ flex: 1, overflow: 'hidden' }}>
+                {renderMockScreen()}
+              </View>
+
+              <View style={styles.moviesBottomBar}>
+                <MaterialCommunityIcons name="home" size={14} color="#000" />
+                <MaterialCommunityIcons name="magnify" size={14} color="#94A3B8" />
+                <MaterialCommunityIcons name="ticket-confirmation-outline" size={14} color="#94A3B8" />
+                <MaterialCommunityIcons name="account" size={14} color="#94A3B8" />
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Middle: Module Tabs Row */}
+      <View style={styles.tabsRow}>
+        {modules.map((item) => {
+          const isActive = item.id === activeModule;
+          return (
+            <Pressable
+              key={item.id}
+              onPress={() => setActiveModule(item.id)}
+              style={[
+                styles.tabButton,
+                isActive && { borderColor: activeDetail.color, backgroundColor: activeDetail.color + '15' },
+              ]}
+            >
+              <MaterialCommunityIcons name={item.icon} size={14} color={isActive ? activeDetail.color : colors.textMuted} />
+              <Text style={[styles.tabLabel, isActive && { color: activeDetail.color, fontWeight: '900' }]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Bottom Half: About Section */}
+      <View style={styles.bottomHalf}>
+        <View style={styles.watermarkContainer}>
+          <Text style={styles.watermarkText}>redesign</Text>
         </View>
 
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with a one-time code</Text>
-          <View style={styles.dividerLine} />
+        <Text style={[styles.aboutEyebrow, { color: activeDetail.color }]}>ABOUT REDESIGN</Text>
+        
+        <View style={styles.aboutColumns}>
+          <View style={styles.aboutCol}>
+            <Text style={styles.aboutTitle}>Challenge</Text>
+            <Text style={styles.aboutBody} numberOfLines={4}>{activeDetail.challenge}</Text>
+          </View>
+          <View style={styles.aboutCol}>
+            <Text style={styles.aboutTitle}>Output</Text>
+            <Text style={styles.aboutBody} numberOfLines={4}>{activeDetail.output}</Text>
+          </View>
         </View>
 
-        <View style={styles.inlineOptions}>
-          <Pressable onPress={() => handleOtpRoute('phone')} style={styles.inlineButton}>
-            <View style={styles.inlineIconWrap}>
-              <MaterialCommunityIcons color={colors.sky} name="phone-outline" size={18} />
-            </View>
-            <View style={styles.inlineCopy}>
-              <Text style={styles.inlineButtonTitle}>Phone number</Text>
-              <Text style={styles.inlineButtonMeta}>SMS or WhatsApp code</Text>
-            </View>
-          </Pressable>
-
-          <Pressable onPress={() => handleOtpRoute('email')} style={styles.inlineButton}>
-            <View style={styles.inlineIconWrap}>
-              <MaterialCommunityIcons color={colors.sky} name="email-outline" size={18} />
-            </View>
-            <View style={styles.inlineCopy}>
-              <Text style={styles.inlineButtonTitle}>Email</Text>
-              <Text style={styles.inlineButtonMeta}>Inbox verification code</Text>
-            </View>
-          </Pressable>
-        </View>
-
-        <Text style={styles.helper}>
-          Choose any option above. If you use phone or email, Gozy sends a secure one-time code on the next screen.
-        </Text>
-
-        <Pressable
-          disabled={busyDemo || Boolean(busyProvider)}
-          onPress={handleDemo}
-          style={[styles.demoButton, (busyDemo || Boolean(busyProvider)) && styles.disabledButton]}>
-          {busyDemo ? (
-            <ActivityIndicator color={colors.sky} size="small" />
-          ) : (
-            <>
-              <MaterialCommunityIcons color={colors.sky} name="arrow-right-circle-outline" size={18} />
-              <Text style={styles.demoButtonText}>Continue as demo user</Text>
-            </>
-          )}
+        <Pressable onPress={handleNext} style={styles.continueButton}>
+          <Text style={styles.continueButtonText}>Try the Future</Text>
+          <MaterialCommunityIcons name="arrow-right" size={16} color="#FFFFFF" />
         </Pressable>
       </View>
-
-      <View style={styles.detailGrid}>
-        {detailCards.map((card) => (
-          <View key={card.title} style={styles.detailCard}>
-            <View style={styles.detailIcon}>
-              <MaterialCommunityIcons color={colors.sky} name={card.icon} size={18} />
-            </View>
-            <Text style={styles.detailTitle}>{card.title}</Text>
-            <Text style={styles.detailBody}>{card.body}</Text>
-          </View>
-        ))}
-      </View>
-    </ScreenShell>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    gap: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  heroCard: {
-    minHeight: 410,
-    borderRadius: radius.lg,
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-    shadowColor: colors.shadow,
-    shadowOpacity: 1,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 6,
   },
-  heroImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  heroTopRow: {
+  heroBgCircle: {
     position: 'absolute',
-    top: spacing.lg,
-    left: spacing.lg,
-    right: spacing.lg,
+    top: -100,
+    right: -150,
+    width: screenHeight * 0.7,
+    height: screenHeight * 0.7,
+    borderRadius: screenHeight * 0.35,
+    zIndex: 0,
+  },
+  topHalf: {
+    flex: 5, // Reduced from 5.5 to shift boundary up
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    zIndex: 2,
+    paddingTop: 35, // Reduced from 45 to shift content up
+    paddingHorizontal: 20,
+    zIndex: 1,
   },
-  logoBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
-  },
-  logoBadgeText: {
-    color: '#FFFFFF',
-    fontSize: typography.caption,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  heroPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-  },
-  heroPillText: {
-    color: '#FFFFFF',
-    fontSize: typography.tiny,
-    fontWeight: '700',
-  },
-  heroContent: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: spacing.xl,
-    gap: spacing.md,
-  },
-  heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '900',
-    lineHeight: 38,
-    maxWidth: 290,
-  },
-  heroBody: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: typography.body,
-    lineHeight: 22,
-    maxWidth: 310,
-  },
-  benefitRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  benefitChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  benefitLabel: {
-    color: '#FFFFFF',
-    fontSize: typography.caption,
-    fontWeight: '700',
-  },
-  heroStatsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  heroStatCard: {
-    flex: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-  },
-  heroStatValue: {
-    color: '#FFFFFF',
-    fontSize: typography.body,
-    fontWeight: '900',
-  },
-  heroStatLabel: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: typography.caption,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  snapshotRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  snapshotCard: {
-    flex: 1,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-    gap: spacing.xs,
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
-  snapshotIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
+  heroLeftCol: {
+    flex: 1.1,
     justifyContent: 'center',
+    paddingRight: 10,
   },
-  snapshotLabel: {
-    color: colors.text,
-    fontSize: typography.caption,
+  eyebrow: {
+    fontSize: 9,
     fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 8,
   },
-  snapshotMeta: {
-    color: colors.textMuted,
-    fontSize: typography.tiny,
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+    lineHeight: 32,
+    marginBottom: 6, // Reduced margin
+  },
+  description: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#000000', // Changed to black
     lineHeight: 16,
   },
-  panel: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.lg,
-    gap: spacing.md,
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.65,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
+  heroRightCol: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  panelHeader: {
+  phoneMockupRotated: {
+    width: 165,
+    height: 345,
+    backgroundColor: '#000',
+    borderRadius: 24,
+    padding: 5,
+    transform: [{ rotate: '12deg' }, { translateX: 5 }],
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    shadowOffset: { width: 5, height: 10 },
+    elevation: 10,
+  },
+  phoneNotch: {
+    position: 'absolute',
+    top: 5,
+    left: '50%',
+    marginLeft: -25,
+    width: 50,
+    height: 12,
+    backgroundColor: '#000',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    zIndex: 10,
+  },
+  phoneScreen: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  mockStatusBar: {
+    height: 20,
+    backgroundColor: '#0F172A',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 4,
+    zIndex: 2,
   },
-  panelLabel: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+  statusBarTime: {
+    color: '#FFF',
+    fontSize: 8,
+    fontWeight: '600',
   },
-  panelTitle: {
-    color: colors.text,
-    fontSize: typography.section,
-    fontWeight: '900',
-    marginTop: 2,
-  },
-  panelTag: {
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  panelTagText: {
-    color: colors.sky,
-    fontSize: typography.tiny,
-    fontWeight: '800',
-  },
-  segmented: {
+  statusBarIcons: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 10,
+    paddingVertical: 5, // Reduced padding
+    gap: 6,
+    zIndex: 2,
+  },
+  tabButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: 'transparent',
     borderRadius: radius.pill,
-    backgroundColor: colors.canvasMuted,
-    padding: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     gap: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
-  segment: {
-    flex: 1,
-    height: 46,
-    borderRadius: radius.pill,
-    alignItems: 'center',
+  tabLabel: {
+    color: colors.textMuted,
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  bottomHalf: {
+    flex: 3, // Increased from 2.5 to push tabs up
+    paddingHorizontal: 20,
+    position: 'relative',
     justifyContent: 'center',
   },
-  segmentActive: {
-    backgroundColor: colors.sky,
+  watermarkContainer: {
+    position: 'absolute',
+    top: -35,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: -1,
   },
-  segmentText: {
-    color: colors.textMuted,
-    fontSize: typography.body,
-    fontWeight: '700',
+  watermarkText: {
+    fontSize: 55,
+    fontWeight: '900',
+    color: '#F1F5F9',
+    opacity: 0.8,
   },
-  segmentTextActive: {
+  aboutEyebrow: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  aboutColumns: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  aboutCol: {
+    flex: 1,
+  },
+  aboutTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  aboutBody: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  continueButton: {
+    marginTop: 24, // Added more top spacing
+    marginBottom: 24, // Added bottom spacing
+    alignSelf: 'center',
+    backgroundColor: '#0EA5E9',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  continueButtonText: {
     color: '#FFFFFF',
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.body,
+    fontSize: 12,
     fontWeight: '800',
   },
-  stack: {
-    gap: spacing.sm,
-  },
-  authButton: {
-    minHeight: 64,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  authButtonLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+  mockScreenBody: {
     flex: 1,
+    backgroundColor: '#0F172A',
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
   },
-  authIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
+  moviesTopNav: {
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  moviesNavTabs: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  moviesNavTab: {
+    color: '#94A3B8',
+    fontSize: 7,
+    fontWeight: '600',
+  },
+  moviesNavTabActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  moviesFiltersRow: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    marginTop: 4,
   },
-  authCopy: {
-    flex: 1,
+  moviesFilterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
     gap: 2,
   },
-  authButtonText: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
+  moviesFilterText: {
+    fontSize: 5,
+    fontWeight: '700',
+    color: '#FFF',
   },
-  authButtonSubtext: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    lineHeight: 18,
+  moviesHeroCard: {
+    marginHorizontal: 8,
+    marginTop: 6,
+    height: 180,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#1E293B',
+    position: 'relative',
   },
-  dividerRow: {
+  moviesHeroContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 8,
+  },
+  moviesHeroTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+    fontStyle: 'italic',
+  },
+  moviesHeroStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
+    gap: 2,
+    marginTop: 2,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.line,
-  },
-  dividerText: {
-    color: colors.textLight,
-    fontSize: typography.caption,
+  moviesHeroStatText: {
+    color: '#FFFFFF',
+    fontSize: 7,
     fontWeight: '700',
   },
-  inlineOptions: {
+  moviesHeroStatSub: {
+    color: '#94A3B8',
+    fontSize: 6,
+  },
+  moviesHeroMeta: {
+    color: '#94A3B8',
+    fontSize: 6,
+    marginTop: 2,
+  },
+  moviesBookBtn: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: '#F43F5E',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  moviesBookBtnText: {
+    color: '#FFFFFF',
+    fontSize: 7,
+    fontWeight: '800',
+  },
+  mockListCard: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  inlineButton: {
-    flex: 1,
-    minHeight: 88,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  inlineIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    marginHorizontal: 8,
+    marginTop: 6,
+    padding: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.line,
   },
-  inlineCopy: {
+  mockAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginRight: 8,
+  },
+  mockListTextStack: {
+    flex: 1,
     gap: 4,
   },
-  inlineButtonTitle: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
+  mockListLine1: {
+    height: 6,
+    width: '60%',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 3,
   },
-  inlineButtonMeta: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    lineHeight: 18,
+  mockListLine2: {
+    height: 5,
+    width: '40%',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 3,
   },
-  helper: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    lineHeight: 18,
-  },
-  demoButton: {
-    minHeight: 52,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  moviesBottomBar: {
+    height: 28,
+    backgroundColor: '#0F172A',
     flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  demoButtonText: {
-    color: colors.sky,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  disabledButton: {
-    opacity: 0.55,
-  },
-  detailGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  detailCard: {
-    width: '47%',
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  detailIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceSoft,
+    justifyContent: 'space-around',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  detailTitle: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '800',
-  },
-  detailBody: {
-    color: colors.textMuted,
-    fontSize: typography.caption,
-    lineHeight: 18,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    zIndex: 2,
   },
 });

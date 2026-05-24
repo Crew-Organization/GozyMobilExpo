@@ -82,7 +82,7 @@ export default function ProfileTabScreen() {
       <Pressable
         onPress={() => {
           logout();
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/welcome');
         }}
         style={styles.logoutButton}>
         <Text style={styles.logoutText}>Log out</Text>

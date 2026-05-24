@@ -9,8 +9,11 @@ import { colors, spacing, typography } from '@/src/theme/tokens';
 export default function Index() {
   const { session, onboarded, isHydrating } = useApp();
 
-  if (!isHydrating && session && onboarded) {
-    return <Redirect href="/(tabs)" />;
+  if (!isHydrating) {
+    if (session && onboarded) {
+      return <Redirect href="/(tabs)" />;
+    }
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   return (
