@@ -278,6 +278,89 @@ function createTravelBooking(payload) {
   };
 }
 
+function createHotelBooking(payload) {
+  const hotel =
+    state.travel.find((item) => item.id === payload.hotelId && item.type === 'hotel') ||
+    state.travel.find((item) => item.type === 'hotel');
+
+  if (!hotel) {
+    return null;
+  }
+
+  const couponSavings =
+    payload.couponCode === 'MMTSMARTDEAL'
+      ? 297
+      : payload.couponCode === 'WELCOMETRIP'
+        ? 431
+        : 0;
+  const roomPrice = Math.max(1, Math.round(hotel.price || 3500));
+  const taxes = Math.round(roomPrice * 0.18);
+  const tripSecure = payload.tripSecure ? 29 * payload.guests : 0;
+  const total = roomPrice + taxes + tripSecure - couponSavings;
+  const payment = chargeWalletIfNeeded(total, payload.paymentMethod);
+
+  if (!payment.ok) {
+    return { error: payment.error };
+  }
+
+  const primaryGuest = payload.travelerInfo[0];
+  const booking = {
+    id: makeId('booking'),
+    experienceId: hotel.id,
+    title: hotel.title,
+    category: 'Travel',
+    location: hotel.location,
+    date: payload.checkIn,
+    guests: payload.guests,
+    total,
+    status: 'confirmed',
+  };
+
+  state.bookings.unshift(booking);
+  state.dashboard.monthlySpend += total;
+  state.dashboard.tripCount += 1;
+  state.dashboard.recentActivity.unshift(`Booked ${hotel.title} for ${primaryGuest.firstName}.`);
+  state.dashboard.recentActivity = state.dashboard.recentActivity.slice(0, 3);
+
+  addTransaction({
+    title:
+      payload.paymentMethod === 'wallet'
+        ? 'Hotel booking via wallet'
+        : 'Hotel booking via mock gateway',
+    amount: total,
+    type: 'debit',
+    category: 'booking',
+  });
+
+  addNotification({
+    title: 'Hotel booking confirmed',
+    body: `${hotel.title} is ready for check-in on ${payload.checkIn}.`,
+    kind: 'booking',
+  });
+
+  return {
+    bookingId: booking.id,
+    pnr: `HZ${Math.floor(100000 + Math.random() * 900000)}`,
+    hotelName: hotel.title,
+    roomName: payload.roomId === 'room-studio' ? 'Studio Room' : 'Standard Room',
+    checkIn: payload.checkIn,
+    checkOut: payload.checkOut,
+    guests: payload.guests,
+    rooms: payload.rooms,
+    amountPaid: total,
+    savings: couponSavings,
+    paymentMethod: payload.paymentMethod,
+    status: 'confirmed',
+    walletBalance: state.walletBalance,
+    summaryChips: [
+      `${payload.rooms} Room`,
+      `${payload.guests} Guests`,
+      payload.tripSecure ? 'Trip Secured' : 'No Insurance',
+    ],
+    supportMessage: 'Your stay voucher, check-in instructions, and support are now available inside Gozy bookings.',
+  };
+}
+
 function createBookingFromExperience(experienceId) {
   const experience = getExperienceById(experienceId);
   if (!experience) {
@@ -553,6 +636,7 @@ module.exports = {
   searchTravelInventory,
   createBookingFromExperience,
   createTravelBooking,
+  createHotelBooking,
   createCheckoutOrder,
   createFoodOrder,
   createShoppingOrder,

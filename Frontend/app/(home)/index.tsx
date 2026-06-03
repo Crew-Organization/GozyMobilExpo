@@ -371,6 +371,9 @@ export default function SuperAppDashboard() {
 
   const handleFeaturePress = (id?: string) => {
     if (id === 'food') router.push('/food');
+    else if (id === 'hotels' || id === 'hourly') router.push('/(hotel-module)/hotels');
+    else if (id === 'flights') router.push('/travel');
+    else if (id === 'shopping') router.push('/shopping');
     else if (id === 'movies' || id === 'entertainment')
       router.push({ pathname: '/entertainment', params: { tab: 'home' } });
     else if (id === 'events') router.push({ pathname: '/entertainment', params: { tab: 'live' } });
@@ -550,7 +553,7 @@ export default function SuperAppDashboard() {
           <Text style={styles.sectionTitle}>Flagship Hotel Stores</Text>
         </View>
         <View style={styles.hotelsGrid}>
-          <Pressable style={styles.hotelLarge}>
+          <Pressable style={styles.hotelLarge} onPress={() => router.push('/(hotel-module)/hotels')}>
             <Image source={{ uri: hotelStores[0].image }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
             <LinearGradient colors={['transparent', 'rgba(0,0,0,0.72)']} style={StyleSheet.absoluteFillObject} />
             <View style={[styles.hotelLogoBadge, { backgroundColor: hotelStores[0].logoBg }]}>
@@ -560,7 +563,7 @@ export default function SuperAppDashboard() {
           </Pressable>
           <View style={styles.hotelRightCol}>
             {hotelStores.slice(1).map((h) => (
-              <Pressable key={h.id} style={styles.hotelSmall}>
+              <Pressable key={h.id} style={styles.hotelSmall} onPress={() => router.push('/(hotel-module)/hotels')}>
                 <Image source={{ uri: h.image }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={StyleSheet.absoluteFillObject} />
                 <View style={[styles.hotelLogoBadgeSmall, { backgroundColor: h.logoBg }]}>

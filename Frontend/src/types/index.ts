@@ -137,6 +137,113 @@ export type TravelBookingConfirmation = {
   supportMessage: string;
 };
 
+// Hotel specific types
+export type HotelSearchType = 'regular' | 'hourly';
+
+export type HotelSearchParams = {
+  searchType: HotelSearchType;
+  city: string;
+  checkInDate: string;
+  checkOutDate: string;
+  checkInTime?: string; // only for hourly
+  guests: number;
+  rooms: number;
+};
+
+export type HotelRoom = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  amenities: string[];
+  capacity: number;
+  sizeSqFt: number;
+  bedType: string;
+  bathroomCount: number;
+};
+
+export type HotelRules = {
+  checkInTime: string;
+  checkOutTime: string;
+  unmarriedCouplesAllowed: boolean;
+  maleGroupsAllowed: boolean;
+  idProofs: string[];
+  outsideFoodAllowed: boolean;
+  petsAllowed: boolean;
+  smokingAllowed: boolean;
+  childPolicy: string;
+  mustRead: string[];
+};
+
+export type HotelOffer = {
+  id: string;
+  name: string;
+  image: string;
+  images: string[];
+  starRating: number;
+  rating: number;
+  ratingLabel: string;
+  reviewCount: number;
+  location: string;
+  area: string;
+  price: number;
+  taxes: number;
+  originalPrice: number;
+  highlights: string[];
+  tags: string[];
+  amenities: string[];
+  description: string;
+  rooms: HotelRoom[];
+  isLuxe?: boolean;
+  isSponsored?: boolean;
+  badge?: string;
+  apartmentType?: string;
+  rules: HotelRules;
+};
+
+export type HotelTraveler = {
+  title: 'Mr' | 'Mrs' | 'Ms';
+  firstName: string;
+  lastName: string;
+};
+
+export type HotelPaymentMethod = 'wallet' | 'upi' | 'card' | 'netbanking' | 'emi';
+
+export type HotelBookingPayload = {
+  hotelId: string;
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
+  travelerInfo: HotelTraveler[];
+  contactInfo: TravelContact;
+  gstNumber?: string;
+  tripSecure: boolean;
+  couponCode: string | null;
+  paymentMethod: HotelPaymentMethod;
+};
+
+export type HotelBookingConfirmation = {
+  bookingId: string;
+  pnr: string;
+  hotelName: string;
+  roomName: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
+  amountPaid: number;
+  savings: number;
+  paymentMethod: HotelPaymentMethod;
+  status: 'confirmed';
+  walletBalance: number;
+  summaryChips: string[];
+  supportMessage: string;
+  specialRequests?: string;
+};
+
 export type Address = {
   id: string;
   label: string;

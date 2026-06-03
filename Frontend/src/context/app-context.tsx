@@ -10,7 +10,7 @@ import {
 import { io, type Socket } from 'socket.io-client';
 
 import { api } from '@/src/lib/api';
-import { mockBootstrap, mockSession } from '@/src/lib/mock-data';
+import { mockBootstrap } from '@/src/lib/mock-data';
 import { configureNotifications, sendLocalNotification } from '@/src/lib/notifications';
 import type {
   AppNotification,
@@ -35,6 +35,8 @@ import type {
   TravelItem,
   UserProfile,
   WalletTransaction,
+  HotelBookingConfirmation,
+  HotelBookingPayload,
 } from '@/src/types';
 
 type ProfileInput = {
@@ -77,6 +79,7 @@ type AppContextValue = {
   addMoney: (amount: number) => Promise<void>;
   bookExperience: (experience: Experience) => Promise<void>;
   createTravelBooking: (payload: TravelBookingPayload) => Promise<TravelBookingConfirmation>;
+  createHotelBooking: (payload: HotelBookingPayload) => Promise<HotelBookingConfirmation>;
   refreshApp: () => Promise<void>;
   markNotificationRead: (notificationId: string) => Promise<void>;
   markConversationRead: (conversationId: string) => void;
@@ -464,6 +467,16 @@ export function AppProvider({ children }: PropsWithChildren) {
     return confirmation;
   };
 
+  const createHotelBooking = async (payload: HotelBookingPayload) => {
+    const confirmation = await api.createHotelBooking(payload);
+    await hydrateApp();
+    sendLocalNotification(
+      'Hotel booking confirmed',
+      `${confirmation.hotelName} is now available in your Gozy bookings.`,
+    );
+    return confirmation;
+  };
+
   const markNotificationRead = async (notificationId: string) => {
     await api.markNotificationRead(notificationId);
     setNotifications((current) =>
@@ -564,6 +577,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     addMoney,
     bookExperience,
     createTravelBooking,
+    createHotelBooking,
     refreshApp,
     markNotificationRead,
     markConversationRead,

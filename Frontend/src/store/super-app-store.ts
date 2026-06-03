@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { defaultTravelSearch } from '@/src/lib/travel-data';
+import { defaultHotelSearch } from '@/src/lib/hotel-data';
 import type {
   CartItem,
   CommercePaymentMethod,
@@ -16,6 +17,12 @@ import type {
   TravelSearchParams,
   TravelSearchResult,
   TravelTraveler,
+  HotelBookingConfirmation,
+  HotelPaymentMethod,
+  HotelOffer,
+  HotelRoom,
+  HotelSearchParams,
+  HotelTraveler,
 } from '@/src/types';
 
 type SuperAppState = {
@@ -39,6 +46,18 @@ type SuperAppState = {
   travelAddOnIds: string[];
   travelPaymentMethod: TravelPaymentMethod;
   travelConfirmation: TravelBookingConfirmation | null;
+
+  // Hotel booking state
+  hotelSearch: HotelSearchParams;
+  selectedHotel: HotelOffer | null;
+  selectedRoom: HotelRoom | null;
+  hotelTravelers: HotelTraveler[];
+  hotelContact: TravelContact;
+  hotelTripSecure: boolean;
+  hotelCouponCode: string | null;
+  hotelPaymentMethod: HotelPaymentMethod;
+  hotelConfirmation: HotelBookingConfirmation | null;
+
   addRestaurantItem: (restaurant: Restaurant, item: Restaurant['menu'][number]) => void;
   addProduct: (product: Product) => void;
   updateQuantity: (kind: 'food' | 'shopping', itemId: string, quantity: number) => void;
@@ -64,6 +83,19 @@ type SuperAppState = {
   setTravelPaymentMethod: (method: TravelPaymentMethod) => void;
   setTravelConfirmation: (confirmation: TravelBookingConfirmation | null) => void;
   resetTravelFlow: () => void;
+
+  // Hotel actions
+  setHotelSearch: (search: HotelSearchParams) => void;
+  setSelectedHotel: (hotel: HotelOffer | null) => void;
+  setSelectedRoom: (room: HotelRoom | null) => void;
+  updateHotelTraveler: (index: number, field: keyof HotelTraveler, value: string) => void;
+  setHotelContactField: (field: keyof TravelContact, value: string) => void;
+  seedHotelContact: (contact: Partial<TravelContact>) => void;
+  toggleHotelTripSecure: () => void;
+  setHotelCouponCode: (code: string | null) => void;
+  setHotelPaymentMethod: (method: HotelPaymentMethod) => void;
+  setHotelConfirmation: (confirmation: HotelBookingConfirmation | null) => void;
+  resetHotelFlow: () => void;
 };
 
 const upsertCartItem = (items: CartItem[], nextItem: CartItem) => {
@@ -82,6 +114,13 @@ const makeTravelers = (count: number): TravelTraveler[] =>
     fullName: index === 0 ? 'Gozy Traveller' : '',
     age: index === 0 ? '27' : '',
     gender: index === 0 ? 'Male' : 'Female',
+  }));
+
+const makeHotelTravelers = (count: number): HotelTraveler[] =>
+  Array.from({ length: count }, (_, index) => ({
+    title: 'Mr',
+    firstName: index === 0 ? 'Sankar' : '',
+    lastName: index === 0 ? 'Gozy' : '',
   }));
 
 export const useSuperAppStore = create<SuperAppState>((set) => ({
@@ -108,6 +147,21 @@ export const useSuperAppStore = create<SuperAppState>((set) => ({
   travelAddOnIds: ['gozy-protect'],
   travelPaymentMethod: 'wallet',
   travelConfirmation: null,
+
+  // Hotel booking initial state
+  hotelSearch: defaultHotelSearch,
+  selectedHotel: null,
+  selectedRoom: null,
+  hotelTravelers: makeHotelTravelers(defaultHotelSearch.guests),
+  hotelContact: {
+    phone: '',
+    email: '',
+  },
+  hotelTripSecure: false,
+  hotelCouponCode: null,
+  hotelPaymentMethod: 'wallet',
+  hotelConfirmation: null,
+
   addRestaurantItem: (restaurant, item) =>
     set((state) => ({
       foodCart: upsertCartItem(state.foodCart, {
@@ -264,6 +318,80 @@ export const useSuperAppStore = create<SuperAppState>((set) => ({
       travelConfirmation: null,
       travelTravelers: makeTravelers(defaultTravelSearch.travellers),
       travelContact: {
+        phone: '',
+        email: '',
+      },
+    })),
+
+  // Hotel actions implementation
+  setHotelSearch: (search) =>
+    set(() => ({
+      hotelSearch: search,
+      selectedHotel: null,
+      selectedRoom: null,
+      hotelConfirmation: null,
+      hotelCouponCode: null,
+      hotelTripSecure: false,
+      hotelPaymentMethod: 'wallet',
+      hotelTravelers: makeHotelTravelers(search.guests),
+    })),
+  setSelectedHotel: (hotel) =>
+    set(() => ({
+      selectedHotel: hotel,
+      selectedRoom: null,
+      hotelConfirmation: null,
+    })),
+  setSelectedRoom: (room) =>
+    set(() => ({
+      selectedRoom: room,
+      hotelConfirmation: null,
+    })),
+  updateHotelTraveler: (index, field, value) =>
+    set((state) => ({
+      hotelTravelers: state.hotelTravelers.map((traveler, travelerIndex) =>
+        travelerIndex === index ? { ...traveler, [field]: value } : traveler,
+      ),
+    })),
+  setHotelContactField: (field, value) =>
+    set((state) => ({
+      hotelContact: {
+        ...state.hotelContact,
+        [field]: value,
+      },
+    })),
+  seedHotelContact: (contact) =>
+    set((state) => ({
+      hotelContact: {
+        ...state.hotelContact,
+        ...contact,
+      },
+    })),
+  toggleHotelTripSecure: () =>
+    set((state) => ({
+      hotelTripSecure: !state.hotelTripSecure,
+    })),
+  setHotelCouponCode: (code) =>
+    set(() => ({
+      hotelCouponCode: code,
+    })),
+  setHotelPaymentMethod: (method) =>
+    set(() => ({
+      hotelPaymentMethod: method,
+    })),
+  setHotelConfirmation: (confirmation) =>
+    set(() => ({
+      hotelConfirmation: confirmation,
+    })),
+  resetHotelFlow: () =>
+    set(() => ({
+      selectedHotel: null,
+      selectedRoom: null,
+      hotelConfirmation: null,
+      hotelCouponCode: null,
+      hotelTripSecure: false,
+      hotelPaymentMethod: 'wallet',
+      hotelTravelers: makeHotelTravelers(defaultHotelSearch.guests),
+      hotelContact: {
         phone: '',
         email: '',
       },

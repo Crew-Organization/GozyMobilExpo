@@ -1,6 +1,6 @@
 const { z } = require('zod');
 
-const { createBookingFromExperience, createTravelBooking, state } = require('../utils/store');
+const { createBookingFromExperience, createHotelBooking, createTravelBooking, state } = require('../utils/store');
 
 const bookingSchema = z.object({
   experienceId: z.string().min(1),
@@ -38,6 +38,32 @@ const travelBookingSchema = z.object({
   paymentMethod: z.enum(['wallet', 'upi', 'card']),
 });
 
+const hotelBookingSchema = z.object({
+  hotelId: z.string().min(1),
+  roomId: z.string().min(1),
+  checkIn: z.string().min(1),
+  checkOut: z.string().min(1),
+  guests: z.number().int().min(1).max(8),
+  rooms: z.number().int().min(1).max(4),
+  travelerInfo: z
+    .array(
+      z.object({
+        title: z.enum(['Mr', 'Mrs', 'Ms']),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+      }),
+    )
+    .min(1),
+  contactInfo: z.object({
+    phone: z.string().min(10),
+    email: z.string().email(),
+  }),
+  gstNumber: z.string().optional(),
+  tripSecure: z.boolean(),
+  couponCode: z.string().nullable(),
+  paymentMethod: z.enum(['wallet', 'upi', 'card', 'netbanking', 'emi']),
+});
+
 function getBookingsController(_req, res) {
   res.json(state.bookings);
 }
@@ -67,8 +93,24 @@ function createTravelBookingController(req, res) {
   return res.status(201).json(booking);
 }
 
+function createHotelBookingController(req, res) {
+  const payload = hotelBookingSchema.parse(req.body);
+  const booking = createHotelBooking(payload);
+
+  if (!booking) {
+    return res.status(404).json({ message: 'Hotel or room not found' });
+  }
+
+  if (booking.error) {
+    return res.status(400).json({ message: booking.error });
+  }
+
+  return res.status(201).json(booking);
+}
+
 module.exports = {
   getBookingsController,
   createBookingController,
   createTravelBookingController,
+  createHotelBookingController,
 };

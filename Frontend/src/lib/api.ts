@@ -10,6 +10,10 @@ import {
   buildFallbackTravelConfirmation,
   buildTravelSearchResult,
 } from '@/src/lib/travel-data';
+import {
+  buildFallbackHotelConfirmation,
+  mockHotels,
+} from '@/src/lib/hotel-data';
 import type {
   BootstrapPayload,
   AuthChannel,
@@ -31,6 +35,8 @@ import type {
   TravelSearchParams,
   TravelSearchResult,
   UserProfile,
+  HotelBookingConfirmation,
+  HotelBookingPayload,
 } from '@/src/types';
 
 const fallbackApiUrl =
@@ -303,6 +309,20 @@ export const api = {
         payload.paymentMethod,
         mockBootstrap.walletBalance,
       );
+    }
+  },
+  async createHotelBooking(
+    payload: HotelBookingPayload,
+  ): Promise<HotelBookingConfirmation> {
+    try {
+      return await request<HotelBookingConfirmation>('/bookings/hotel', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      const hotel = mockHotels.find((h) => h.id === payload.hotelId) ?? mockHotels[0];
+      const room = hotel.rooms.find((r) => r.id === payload.roomId) ?? hotel.rooms[0];
+      return buildFallbackHotelConfirmation(payload, hotel, room, mockBootstrap.walletBalance);
     }
   },
   async markNotificationRead(notificationId: string) {
