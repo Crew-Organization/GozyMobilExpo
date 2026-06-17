@@ -1,0 +1,52 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "expo-router/src/*": [
+        "./node_modules/expo-router/build/*"
+      ],
+      "expo-av/src/*": [
+        "./node_modules/expo-av/build/*"
+      ],
+      "expo-asset/src/*": [
+        "./node_modules/expo-asset/build/*"
+      ],
+      "expo-image/src/*": [
+        "./node_modules/expo-image/build/*"
+      ],
+      "expo-modules-core/src/*": [
+        "./node_modules/expo-modules-core/build/*"
+      ],
+      "react-native/Libraries/Image/AssetSourceResolver": [
+        "./global.d.ts"
+      ],
+      "@react-native/assets-registry/registry": [
+        "./global.d.ts"
+      ],
+      "react-native/Libraries/Image/resolveAssetSource": [
+        "./global.d.ts"
+      ],
+      "invariant": [
+        "./global.d.ts"
+      ],
+      "react-native/node_modules/@react-native/virtualized-lists": [
+        "./node_modules/react-native/node_modules/@react-native/virtualized-lists"
+      ],
+      "react-native/node_modules/@react-native/virtualized-lists/*": [
+        "./node_modules/react-native/node_modules/@react-native/virtualized-lists/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}

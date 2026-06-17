@@ -1,0 +1,14 @@
+{
+  "name": "gozy-monorepo",
+  "version": "1.0.0",
+  "description": "Gozy — AI-powered lifestyle super app (monorepo root)",
+  "private": true,
+  "scripts": {
+    "start": "echo 'Run: cd Frontend && npm start (mobile) OR cd Server && npm start (backend)'",
+    "mobile": "cd Frontend && npm start",
+    "server": "cd Server && npm run dev",
+    "server:prod": "cd Server && npm start",
+    "install:all": "cd Frontend && npm install && cd ../Server && npm install",
+    "lint": "cd Frontend && npm run lint"
+  }
+}
